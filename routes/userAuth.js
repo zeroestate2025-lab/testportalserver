@@ -1,24 +1,50 @@
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const router = express.Router();
+const UserTest = require("../models/UserTests");
 
-const JWT_SECRET = "super_secret_key";
+// ✅ Register candidate (store in MongoDB as waiting)
+router.post("/register", async (req, res) => {
+  try {
+    const { fullName, email } = req.body;
 
-// Fixed credentials
-const CONST_USER = {
-  username: "Univision",
-  password: "user@123",
-};
+    if (!fullName || !email) {
+      return res.status(400).json({ error: "Full name and email are required" });
+    }
 
-// User login (constant credentials)
-router.post("/login", (req, res) => {
-  const { username, password } = req.body;
+    // Avoid duplicate waiting entries
+    let existing = await UserTest.findOne({ email, status: "waiting" });
+    if (existing) {
+      return res.json({ message: "Already waiting", userId: existing._id });
+    }
 
-  if (username === CONST_USER.username && password === CONST_USER.password) {
-    const token = jwt.sign({ username, role: "user" }, JWT_SECRET, { expiresIn: "6h" });
-    res.json({ token, role: "user" });
-  } else {
-    res.status(401).json({ error: "Invalid username or password" });
+    const newUser = new UserTest({
+      fullName,
+      email,
+      status: "waiting",
+    });
+
+    await newUser.save();
+    res.status(200).json({
+      message: "User registered successfully. Waiting for admin to start the test.",
+      userId: newUser._id,
+    });
+  } catch (error) {
+    console.error("❌ Error registering user:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// ✅ Check user test status
+router.get("/status/:id", async (req, res) => {
+  try {
+    const user = await UserTest.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json({ status: user.status });
+  } catch (error) {
+    console.error("❌ Error checking user status:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

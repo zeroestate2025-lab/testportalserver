@@ -31,6 +31,7 @@ app.use("/api/questions", questionRoutes);
 app.get("/", (req, res) => res.send("Interview Test Portal API is running..."));
 const testRoutes = require("./routes/tests");
 
+app.use("/api/waiting-users", require("./routes/waitingUsers"));
 
 app.use("/api/tests", testRoutes);
 
