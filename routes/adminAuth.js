@@ -14,10 +14,10 @@ router.post("/register", async (req, res) => {
     if (existing) return res.status(400).json({ error: "Admin already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
-    const admin = new Admin({ username, password: hashed });
-    await admin.save();
+    const newAdmin = new Admin({ username, password: hashed });
+    await newAdmin.save();
 
-    res.status(201).json({ message: "Admin registered successfully" });
+    res.json({ message: "Admin registered successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
